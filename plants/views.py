@@ -21,13 +21,9 @@ def add_plant(request):
         plant.parent = request.user
         plant.save()
         sensor1 = Sensor()
-        sensor1.sensor_type = 'Temperature'
+        sensor1.sensor_type = 'GPS Module'
         sensor1.parent = plant
         sensor1.save()
-        sensor2 = Sensor()
-        sensor2.sensor_type = 'GPS Module'
-        sensor2.parent = plant
-        sensor2.save()
         actuator = Actuator()
         actuator.parent = plant
         actuator.name = request.POST.get('alias')
@@ -52,12 +48,10 @@ def last_readings(request, username):
     plant = Plant.objects.get(alias=username, parent=request.user)
     print(plant.alias)
     sensors = plant.sensor_set.all()
-    temp_values = SensorData.objects.filter(parent__sensor_type='Temperature', parent__parent=plant)[:100]
-    temp_values = list(map(lambda x: model_to_dict(x), temp_values))
     gps_values = SensorData.objects.filter(parent__sensor_type='GPS Module', parent__parent=plant)[:100]
     gps_values = list(map(lambda x: model_to_dict(x), gps_values))
 
-    dict1 = {'temp_values': temp_values, 'gps_values': gps_values}
+    dict1 = {'gps_values': gps_values}
     return JsonResponse(dict1, safe=False)
 
 
@@ -68,28 +62,19 @@ def plantboard(request, username):
     print(plant.alias)
     sensors = plant.sensor_set.all()
     print(sensors)
-    temp_sensor = sensors.filter(sensor_type='Temperature')[0]
     gps_sensor = sensors.filter(sensor_type='GPS Module')[0]
-    sensor_data_temp = SensorData.objects.filter(parent=temp_sensor)
     sensor_data_gps = SensorData.objects.filter(parent=gps_sensor)
     act = Actuator.objects.get(parent__alias=username, name=plant.alias)
-    try:
-        temp = sensor_data_temp.latest('id')
-    except Exception:
-        temp = None
     try:
         gps = sensor_data_gps.latest('id')
     except Exception:
         gps = None
 
-    temp_values = list(map(lambda x: x.value, list(sensor_data_temp)[-1:-11:-1]))
     gps_values = list(map(lambda x: x.value, list(sensor_data_gps)[-1:-11:-1]))
 
     context = {'plant': plant,
                'sensors': sensors,
-               'temp': temp,
                'location': gps,
-               'temp_values': temp_values[::-1],
                'gps_values': gps_values[::-1]
                }
     print(context)

@@ -48,21 +48,14 @@ def add_sensor(request):
             sensor.save()
             sensors = plant.sensor_set.all()
             print(sensors)
-            temp_sensor = sensors.filter(sensor_type='Temperature')[0]
             gps_sensor = sensors.filter(sensor_type='GPS Module')[0]
-            sensor_data_temp = SensorData.objects.filter(parent=temp_sensor)
             sensor_data_gps = SensorData.objects.filter(parent=gps_sensor)
-            try:
-                temp = sensor_data_temp.latest('id')
-            except Exception:
-                temp = None
             try:
                 gps = sensor_data_gps.latest('id')
             except Exception:
                 gps = None
             context = {'plant': plant,
                        'sensors': sensors,
-                       'temp': temp,
                        'location': gps
                        }
             return render(request, "plant1.html", context=context)
